@@ -82,7 +82,7 @@ namespace ProceduralNoise.Editor
                 if (_material)
                     return _material;
 
-                const string path = "Assets/Shaders/NoiseGeneratorPreview.shader";
+                const string path = "Packages/com.jordantama.procedural-noise/Shaders/NoiseGeneratorPreview.shader";
                 _material = new Material(AssetDatabase.LoadAssetAtPath<Shader>(path));
                 _material.SetInt(Mask, (int) _visibleChannels);
                 
@@ -301,7 +301,7 @@ namespace ProceduralNoise.Editor
             output.Create();
 
             ComputeShader shader =
-                AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Compute Shaders/GenerationWindow.compute");
+                AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.jordantama.procedural-noise/Compute Shaders/GenerationWindow.compute");
 
             shader.SetInt("layer", layer);
             

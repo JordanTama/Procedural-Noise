@@ -27,8 +27,8 @@ namespace ProceduralNoise
         #if UNITY_EDITOR
         private void OnEnable()
         {
-            perlinShader ??= AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Compute Shaders/Perlin.compute");
-            worleyShader ??= AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Compute Shaders/Worley.compute");
+            perlinShader ??= AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.jordantama.procedural-noise/Compute Shaders/Perlin.compute");
+            worleyShader ??= AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/com.jordantama.procedural-noise/Compute Shaders/Worley.compute");
         }
         #endif
 
