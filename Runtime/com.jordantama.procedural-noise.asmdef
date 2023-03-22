@@ -1,0 +1,14 @@
+{
+    "name": "com.jordantama.procedural-noise",
+    "rootNamespace": "ProceduralNoise",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
