@@ -1,0 +1,20 @@
+Texture3D<float4> input_3d;
+RWTexture2D<float4> output_2d;
+RWTexture3D<float4> output_3d;
+
+#pragma kernel copy_slice
+
+uint layer;
+
+[numthreads(8,8,1)]
+void copy_slice (uint3 id : SV_DispatchThreadID)
+{
+    output_2d[id.xy] = input_3d[uint3(id.xy, layer)];
+}
+
+#pragma kernel copy_3d
+[numthreads(8,8,8)]
+void copy_3d (uint3 id : SV_DispatchThreadID)
+{
+    output_3d[id.xyz] = input_3d[id.xyz];
+}

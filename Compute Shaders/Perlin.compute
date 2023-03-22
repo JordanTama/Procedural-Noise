@@ -1,0 +1,186 @@
+uint octaves;
+float lacunarity;
+float persistence;
+uint3 cell_count;
+float4x4 region;
+uint4 write_types;
+bool invert;
+
+RWTexture2D<float4> result_2d;
+StructuredBuffer<float2> gradients_2d;
+
+RWTexture3D<float4> result_3d;
+StructuredBuffer<float3> gradients_3d;
+
+float get_output(const uint write_type, const float before, const float noise)
+{
+    switch (write_type)
+    {
+        case 0:
+            return before;
+        case 1:
+            return 0;
+        case 2:
+            return 0.5;
+        case 3:
+            return 1;
+        default:
+            return noise;
+    }
+}
+
+float4 get_output(const float4 before, const float noise)
+{
+    return float4(
+        get_output(write_types.r, before.r, noise),
+        get_output(write_types.g, before.g, noise),
+        get_output(write_types.b, before.b, noise),
+        get_output(write_types.a, before.a, noise)
+        );
+}
+
+float ease(const float t)
+{
+    return ((6 * t - 15) * t + 10) * t * t * t;
+}
+
+float noise_2d(float2 uv)
+{
+    int2 s = sign(uv);
+    uv = abs(uv);
+    uv = uv % 1.0;
+    if (s.x == -1)
+        uv.x = 1.0 - uv.x;
+    if (s.y == -1)
+        uv.y = 1.0 - uv.y;
+    
+    const float2 pos = uv * (float2)cell_count;
+
+    const uint2 index_0 = uint2(pos);
+    const uint2 index_1 = index_0 + uint2(1, 0);
+    const uint2 index_2 = index_0 + uint2(0, 1);
+    const uint2 index_3 = index_0 + uint2(1, 1);
+
+    const float2 grad_0 = gradients_2d[index_0.x % cell_count.x + index_0.y % cell_count.y * cell_count.x];
+    const float2 grad_1 = gradients_2d[index_1.x % cell_count.x + index_1.y % cell_count.y * cell_count.x];
+    const float2 grad_2 = gradients_2d[index_2.x % cell_count.x + index_2.y % cell_count.y * cell_count.x];
+    const float2 grad_3 = gradients_2d[index_3.x % cell_count.x + index_3.y % cell_count.y * cell_count.x];
+
+    const float2 vec_0 = pos - (float2)index_0;
+    const float2 vec_1 = pos - (float2)index_1;
+    const float2 vec_2 = pos - (float2)index_2;
+    const float2 vec_3 = pos - (float2)index_3;
+
+    const float val_0 = (dot(grad_0, vec_0) + 1.0) / 2.0;
+    const float val_1 = (dot(grad_1, vec_1) + 1.0) / 2.0;
+    const float val_2 = (dot(grad_2, vec_2) + 1.0) / 2.0;
+    const float val_3 = (dot(grad_3, vec_3) + 1.0) / 2.0;
+
+    const float tx = ease(pos.x % 1.0);
+    const float ty = ease(pos.y % 1.0);
+    
+    const float val = lerp(lerp(val_0, val_2, ty), lerp(val_1, val_3, ty), tx);
+    return val;
+}
+
+float noise_3d(float3 uv)
+{
+    int3 s = sign(uv);
+    uv = abs(uv);
+    uv = uv % 1.0;
+    if (s.x == -1)
+        uv.x = 1.0 - uv.x;
+    if (s.y == -1)
+        uv.y = 1.0 - uv.y;
+    if (s.z == -1)
+        uv.z = 1.0 - uv.z;
+    
+    const float3 pos = uv * (float3)cell_count;
+
+    const uint3 index_00 = uint3(pos);
+    const uint3 index_01 = index_00 + uint3(1, 0, 0);
+    const uint3 index_02 = index_00 + uint3(0, 1, 0);
+    const uint3 index_03 = index_00 + uint3(1, 1, 0);
+    const uint3 index_10 = index_00 + uint3(0, 0, 1);
+    const uint3 index_11 = index_00 + uint3(1, 0, 1);
+    const uint3 index_12 = index_00 + uint3(0, 1, 1);
+    const uint3 index_13 = index_00 + uint3(1, 1, 1);
+    
+    const float3 grad_00 = gradients_3d[index_00.x % cell_count.x + index_00.y % cell_count.y * cell_count.x + index_00.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_01 = gradients_3d[index_01.x % cell_count.x + index_01.y % cell_count.y * cell_count.x + index_01.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_02 = gradients_3d[index_02.x % cell_count.x + index_02.y % cell_count.y * cell_count.x + index_02.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_03 = gradients_3d[index_03.x % cell_count.x + index_03.y % cell_count.y * cell_count.x + index_03.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_10 = gradients_3d[index_10.x % cell_count.x + index_10.y % cell_count.y * cell_count.x + index_10.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_11 = gradients_3d[index_11.x % cell_count.x + index_11.y % cell_count.y * cell_count.x + index_11.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_12 = gradients_3d[index_12.x % cell_count.x + index_12.y % cell_count.y * cell_count.x + index_12.z % cell_count.z * cell_count.x * cell_count.y];
+    const float3 grad_13 = gradients_3d[index_13.x % cell_count.x + index_13.y % cell_count.y * cell_count.x + index_13.z % cell_count.z * cell_count.x * cell_count.y];
+
+    const float3 vec_00 = pos - (float3)index_00;
+    const float3 vec_01 = pos - (float3)index_01;
+    const float3 vec_02 = pos - (float3)index_02;
+    const float3 vec_03 = pos - (float3)index_03;
+    const float3 vec_10 = pos - (float3)index_10;
+    const float3 vec_11 = pos - (float3)index_11;
+    const float3 vec_12 = pos - (float3)index_12;
+    const float3 vec_13 = pos - (float3)index_13;
+
+    const float val_00 = (dot(grad_00, vec_00) + 1.0) / 2.0;
+    const float val_01 = (dot(grad_01, vec_01) + 1.0) / 2.0;
+    const float val_02 = (dot(grad_02, vec_02) + 1.0) / 2.0;
+    const float val_03 = (dot(grad_03, vec_03) + 1.0) / 2.0;
+    const float val_10 = (dot(grad_10, vec_10) + 1.0) / 2.0;
+    const float val_11 = (dot(grad_11, vec_11) + 1.0) / 2.0;
+    const float val_12 = (dot(grad_12, vec_12) + 1.0) / 2.0;
+    const float val_13 = (dot(grad_13, vec_13) + 1.0) / 2.0;
+
+    const float tx = ease(pos.x % 1.0);
+    const float ty = ease(pos.y % 1.0);
+    const float tz = ease(pos.z % 1.0);
+    
+    const float val_0 = lerp(lerp(val_00, val_02, ty), lerp(val_01, val_03, ty), tx);
+    const float val_1 = lerp(lerp(val_10, val_12, ty), lerp(val_11, val_13, ty), tx);
+
+    return lerp(val_0, val_1, tz);
+}
+
+#pragma kernel worley_2d
+[numthreads(8,8,8)]
+void worley_2d (uint3 id : SV_DispatchThreadID)
+{
+    float2 size;
+    result_2d.GetDimensions(size.x, size.y);
+    const float2 uv = lerp(region._11_12, region._21_22, (float2) id / size);
+
+    float val = 0;
+    for (uint i = 0; i < octaves; i++)
+    {
+        const float frequency = pow(abs(lacunarity), i);
+        const float amplitude = pow(abs(persistence), i);
+        
+        val = lerp(val, noise_2d(uv * frequency), amplitude);
+    }
+
+    const float4 before = result_2d[id.xy];
+    result_2d[id.xy] = get_output(before, invert ? 1 - val : val);
+}
+
+#pragma kernel worley_3d
+[numthreads(8,8,8)]
+void worley_3d (uint3 id : SV_DispatchThreadID)
+{
+    float3 size;
+    result_3d.GetDimensions(size.x, size.y, size.z);
+    const float3 uv = lerp(region._11_12_13, region._21_22_23, (float3) id / size);
+    
+    float val = 0;
+    for (uint i = 0; i < octaves; i++)
+    {
+        const float frequency = pow(abs(lacunarity), i);
+        const float amplitude = pow(abs(persistence), i);
+        
+        val = lerp(val, noise_3d(uv * frequency), amplitude);
+    }
+
+    const float4 before = result_3d[id.xyz];
+    result_3d[id.xyz] = get_output(before, invert ? 1 - val : val);
+}
