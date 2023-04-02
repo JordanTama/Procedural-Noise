@@ -7,7 +7,7 @@ namespace ProceduralNoise
 {
     public static class Perlin
     {
-        public static void Generate(RenderTexture texture, Parameters parameters)
+        public static void Generate(RenderTexture texture, Parameters parameters, float rotation = 0)
         {
             bool is3D = texture.dimension == TextureDimension.Tex3D;
             int kernelIndex = is3D ? 1 : 0;
@@ -15,6 +15,9 @@ namespace ProceduralNoise
             
             // Set target texture
             Settings.PerlinShader.SetTexture(kernelIndex, "result" + suffix, texture);
+            
+            // Set rotation
+            Settings.PerlinShader.SetFloat("rotation", rotation);
 
             // Set FBM parameters
             Settings.PerlinShader.SetInt("octaves", parameters.octaves);
@@ -35,12 +38,13 @@ namespace ProceduralNoise
             // Set region parameters
             Vector4 min = new(parameters.region.min.x, parameters.region.min.y, parameters.region.min.z, 0);
             Vector4 max = new(parameters.region.max.x, parameters.region.max.y, parameters.region.max.z, 0);
+            
             Vector4 column1 = new(min.x, max.x, 0, 0);
             Vector4 column2 = new(min.y, max.y, 0, 0);
             Vector4 column3 = new(min.z, max.z, 0, 0);
             Vector4 column4 = new(0, 0, 0, 0);
             Settings.PerlinShader.SetMatrix("region", new Matrix4x4(column1, column2, column3, column4));
-            
+
             // Set channel parameters
             Settings.PerlinShader.SetInts("write_types",
                 (int)parameters.redSettings.writeType,

@@ -1,3 +1,6 @@
+#define PI 3.14159265358979323846
+
+float rotation;
 uint octaves;
 float lacunarity;
 float persistence;
@@ -42,6 +45,21 @@ float4 get_output(const float4 before, const float noise)
 float ease(const float t)
 {
     return ((6 * t - 15) * t + 10) * t * t * t;
+}
+
+float2 rotate_uv(float2 uv, float2 centre)
+{
+    const float angle = rotation * PI / 180.0;
+
+	float s = sin(angle);
+    float c = cos(angle);
+
+	uv -= centre;
+
+    uv = float2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
+	uv += centre;
+    
+    return uv;
 }
 
 float noise_2d(float2 uv)
@@ -143,14 +161,32 @@ float noise_3d(float3 uv)
     return lerp(val_0, val_1, tz);
 }
 
-#pragma kernel worley_2d
+#pragma kernel perlin_2d
 [numthreads(8,8,8)]
-void worley_2d (uint3 id : SV_DispatchThreadID)
+void perlin_2d (uint3 id : SV_DispatchThreadID)
 {
     float2 size;
     result_2d.GetDimensions(size.x, size.y);
-    const float2 uv = lerp(region._11_12, region._21_22, (float2) id / size);
 
+	float2 min_val = region._11_12;
+	float2 max_val = region._21_22;
+
+	/*float2 a = min_val;
+	float2 b = float2(max_val.x, min_val.y);
+	float2 c = float2(min_val.x, max_val.y);
+	float2 d = max_val;
+
+	a = rotate_uv(a, min_val, max_val);
+	b = rotate_uv(b, min_val, max_val);
+	c = rotate_uv(c, min_val, max_val);
+	d = rotate_uv(d, min_val, max_val);
+
+	min_val = float2(min(a.x, min(b.x, min(c.x, d.x))), min(a.y, min(b.y, min(c.y, d.y))));
+	max_val = float2(max(a.x, max(b.x, max(c.x, d.x))), max(a.y, max(b.y, max(c.y, d.y))));*/
+
+    float2 uv = lerp(min_val, max_val, (float2) id / size);
+	uv = rotate_uv(uv, (max_val + min_val) / 2.0);
+    
     float val = 0;
     for (uint i = 0; i < octaves; i++)
     {
@@ -164,9 +200,9 @@ void worley_2d (uint3 id : SV_DispatchThreadID)
     result_2d[id.xy] = get_output(before, invert ? 1 - val : val);
 }
 
-#pragma kernel worley_3d
+#pragma kernel perlin_3d
 [numthreads(8,8,8)]
-void worley_3d (uint3 id : SV_DispatchThreadID)
+void perlin_3d (uint3 id : SV_DispatchThreadID)
 {
     float3 size;
     result_3d.GetDimensions(size.x, size.y, size.z);

@@ -16,6 +16,7 @@ namespace ProceduralNoise.Editor
 
         private bool _is3D;
         private Vector3Int _resolution;
+        private float _rotation;
         private string _path;
         private string _name;
         private bool _autoName;
@@ -37,6 +38,7 @@ namespace ProceduralNoise.Editor
         private const string ResolutionKeyX = "ProcNoiseResolutionX";
         private const string ResolutionKeyY = "ProcNoiseResolutionY";
         private const string ResolutionKeyZ = "ProcNoiseResolutionZ";
+        private const string RotationKey = "ProcNoiseRotation";
         private const string PathKey = "ProcNoisePath";
         private const string FileNameKey = "ProcNoiseFileName";
         private const string AutoNameKey = "ProcNoiseAutoName";
@@ -140,6 +142,10 @@ namespace ProceduralNoise.Editor
             
             // Resolution field
             _resolution = Vector3Int.Max(Vector3Int.one, EditorGUILayout.Vector3IntField("Resolution", _resolution));
+
+            // Rotation field
+            _rotation = EditorGUILayout.FloatField("Rotation", _rotation);
+            
             if (EditorGUI.EndChangeCheck())
                 RegenerateTexture();
             
@@ -387,7 +393,7 @@ namespace ProceduralNoise.Editor
             switch (_settingsEditor.SelectedNoise)
             {
                 case SettingsEditor.NoiseType.Perlin:
-                    Perlin.Generate(_generated, Settings.PerlinParameters);
+                    Perlin.Generate(_generated, Settings.PerlinParameters, _rotation);
                     break;
                 
                 case SettingsEditor.NoiseType.Voronoi:
@@ -432,6 +438,7 @@ namespace ProceduralNoise.Editor
             EditorPrefs.SetInt(ResolutionKeyX, _resolution.x);
             EditorPrefs.SetInt(ResolutionKeyY, _resolution.y);
             EditorPrefs.SetInt(ResolutionKeyZ, _resolution.z);
+            EditorPrefs.SetFloat(RotationKey, _rotation);
             EditorPrefs.SetString(PathKey, _path);
             EditorPrefs.SetString(FileNameKey, _name);
             EditorPrefs.SetBool(AutoNameKey, _autoName);
@@ -445,6 +452,8 @@ namespace ProceduralNoise.Editor
 
             _resolution = new Vector3Int(EditorPrefs.GetInt(ResolutionKeyX), EditorPrefs.GetInt(ResolutionKeyY), EditorPrefs.GetInt(ResolutionKeyZ));
             _resolution = Vector3Int.Max(Vector3Int.one, _resolution);
+
+            _rotation = EditorPrefs.GetFloat(RotationKey);
             
             _path = EditorPrefs.GetString(PathKey);
             _name = EditorPrefs.GetString(FileNameKey);
