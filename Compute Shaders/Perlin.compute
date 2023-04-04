@@ -171,21 +171,25 @@ void perlin_2d (uint3 id : SV_DispatchThreadID)
 	float2 min_val = region._11_12;
 	float2 max_val = region._21_22;
 
-	/*float2 a = min_val;
+	float2 a = min_val;
 	float2 b = float2(max_val.x, min_val.y);
 	float2 c = float2(min_val.x, max_val.y);
 	float2 d = max_val;
 
-	a = rotate_uv(a, min_val, max_val);
-	b = rotate_uv(b, min_val, max_val);
-	c = rotate_uv(c, min_val, max_val);
-	d = rotate_uv(d, min_val, max_val);
+	float2 centre = (min_val + max_val) / 2.0;
+
+	a = rotate_uv(a, centre);
+	b = rotate_uv(b, centre);
+	c = rotate_uv(c, centre);
+	d = rotate_uv(d, centre);
 
 	min_val = float2(min(a.x, min(b.x, min(c.x, d.x))), min(a.y, min(b.y, min(c.y, d.y))));
-	max_val = float2(max(a.x, max(b.x, max(c.x, d.x))), max(a.y, max(b.y, max(c.y, d.y))));*/
+	max_val = float2(max(a.x, max(b.x, max(c.x, d.x))), max(a.y, max(b.y, max(c.y, d.y))));
 
     float2 uv = lerp(min_val, max_val, (float2) id / size);
 	uv = rotate_uv(uv, (max_val + min_val) / 2.0);
+	
+	//uv.y += uv.x * rotation * PI / 180.0;
     
     float val = 0;
     for (uint i = 0; i < octaves; i++)
